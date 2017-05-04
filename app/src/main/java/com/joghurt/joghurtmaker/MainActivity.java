@@ -166,10 +166,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                     catch(IOException ex)
                     {
-                        if(!switchOnTethering()) {
-                            setMessage("could not turn on usb tethering");
-                            return;
-                        }
+                        switchOnTethering();
                         if(!mpAlarmNoConnection.isPlaying())
                             mpAlarmNoConnection.start();
                         setMessage(strConnStatus + ex.getMessage());
@@ -186,12 +183,15 @@ public class MainActivity extends AppCompatActivity {
 
                 setTextSize(72);
 
+                int iCentralTemperature = 37000;
+                int iAlarmDelta = 2000;
+                boolean bColdAlarm = false;
                 while(bGoOn) {
-                    int iTemperatur = -300;
+                    int iTemperature;
                     try {
                         read_exact(buffer, 4);
-                        iTemperatur = byteArrayToInt(buffer);
-                        setMessage(String.format("%.3f°C", (float)iTemperatur/1000));
+                        iTemperature = byteArrayToInt(buffer);
+                        setMessage(String.format("%.3f°C", (float)iTemperature/1000));
                     } catch (Exception ex) {
                         try {
                             if(interrupted())
@@ -204,12 +204,14 @@ public class MainActivity extends AppCompatActivity {
                         }
                         break;
                     }
-                    if(iTemperatur > 40000)
+                    if(iTemperature > iCentralTemperature)
+                        bColdAlarm = true;
+                    if(iTemperature > iCentralTemperature + iAlarmDelta)
                     {
                         if(!mpAlarmTooHot.isPlaying())
                             mpAlarmTooHot.start();
-                    }else if(iTemperatur < 36000) {
-                        if (!mpAlarmTooCold.isPlaying())
+                    }else if(iTemperature < iCentralTemperature - iAlarmDelta) {
+                        if (bColdAlarm && !mpAlarmTooCold.isPlaying())
                             mpAlarmTooCold.start();
                     }
                 }
